@@ -148,59 +148,62 @@ plt.xlabel("$x$")
 plt.hist(samples, bins=20, edgecolor="black", color='cornflowerblue')
 plt.savefig(f"./Examples/Histogram.png")
 
-mu0 = raw_moment(samples, 0, 0)
-mu1 = raw_moment(samples, 0, 1)
-mu2 = raw_moment(samples, 0, 2)
-mu3 = raw_moment(samples, 0, 3)
-mu4 = raw_moment(samples, 0, 4)
-mu5 = raw_moment(samples, 0, 5)
-mu6 = raw_moment(samples, 0, 6)
-mu7 = raw_moment(samples, 0, 7)
-mu8 = raw_moment(samples, 0, 8)
-mu9 = raw_moment(samples, 0, 9)
-mu10 = raw_moment(samples, 0, 10)
-mu11 = raw_moment(samples, 0, 11)
-
-# Solve for the second orthogonal polynomial
-mmatrix1 = ca.SX([[mu0, mu1], 
-                  [0.0, 1.0]])
-inv_mm1 = ca.inv(mmatrix1)
-mvector1 = ca.SX([0.0, 1.0])
-opcoeffs1 = ca.mtimes(inv_mm1, mvector1)
-
-# Solve for the third orthogonal polynomial
-mmatrix2 = ca.SX([[mu0, mu1, mu2], 
-                  [mu1, mu2, mu3], 
-                  [0.0, 0.0, 1.0]])
-inv_mm2 = ca.inv(mmatrix2)
-mvector2 = ca.SX([0.0, 0.0, 1.0])
-opcoeffs2 = ca.mtimes(inv_mm2, mvector2)
-
-# Solve for the fourth orthogonal polynomial
-mmatrix2 = ca.SX([[mu0, mu1, mu2, mu3], 
-                  [mu1, mu2, mu3, mu4], 
-                  [mu2, mu3, mu4, mu5], 
-                  [0.0, 0.0, 0.0, 1.0]])
-inv_mm2 = ca.inv(mmatrix2)
-mvector2 = ca.SX([0.0, 0.0, 1.0])
-opcoeffs2 = ca.mtimes(inv_mm2, mvector2)
-
-phi_0 = ca.DM(1)
-phi_1 = x + opcoeffs1[0]
-phi_2 = x**2 + opcoeffs2[1]*x + opcoeffs2[0]
-phis = [phi_0, phi_1, phi_2]
-points = [-np.sqrt(3/5), 0.0, np.sqrt(3/5)]
-coeffs = find_coefficients(x, u, phis, points)
-model_approx = ca.DM(0)
-for coeff, phi in zip(ca.vertsplit(coeffs), phis):
-    model_approx += coeff*phi
-models.append(model_approx)
-fmodel = ca.Function('fmodel', [x, u], [model_approx])    
-fmodels.append(fmodel)
-
-
+def apce_find_orthogonal_polynomial(order, samples, x):
+    """ This function is responsible for generating orthogonal polynomial given the 
+    desired polynomial order and the sampled random variables"""
+    m = []
+    for j in range(order-1):
+        m.append([raw_moment(samples, 0, i+j) for i in range(order)])
+    m.append([0.0]*(order-1) + [1.0])
+    m = ca.SX(m)
     
-asdfasd
+    invm = ca.inv(m)
+    mvec = ca.SX([0.0]*(order-1) + [1.0])
+    opcoeffs = ca.mtimes(invm, mvec)
+    
+    for k1 in range(order):
+        phi = ca.SX(0.0)
+        for k2 in range(k1+1):
+            phi += opcoeffs[k2]*x**k2
+    
+    return phi
+
+phi_0 = apce_find_orthogonal_polynomial(1, samples, x) #ca.DM(1)
+phi_1 = apce_find_orthogonal_polynomial(2, samples, x)
+phi_2 = apce_find_orthogonal_polynomial(3, samples, x)
+phi_3 = apce_find_orthogonal_polynomial(4, samples, x)
+phi_4 = apce_find_orthogonal_polynomial(5, samples, x)
+phi_5 = apce_find_orthogonal_polynomial(6, samples, x)
+phi_6 = apce_find_orthogonal_polynomial(7, samples, x)
+
+# 2nd 4th 6th
+phis = [phi_0, phi_1, phi_2]
+for (phis, points) in [([phi_0, phi_1, phi_2], [-np.sqrt(3/5), 0.0, np.sqrt(3/5)]),
+                        ([phi_0, phi_1, phi_2, phi_3, phi_4], [-0.90617984593866, -0.538469310105683, 0.000000000000000, 0.538469310105683, 0.90617984593866]),
+                        ([phi_0, phi_1, phi_2, phi_3, phi_4, phi_5, phi_6], [-0.949107912342759, -0.741531185599394, -0.405845151377397, 0.000000000000000, 0.405845151377397, 0.741531185599394, 0.949107912342759])]:
+    # points = [-np.sqrt(3/5), 0.0, np.sqrt(3/5)]
+    coeffs = find_coefficients(x, u, phis, points)
+    model_approx = ca.DM(0)
+    for coeff, phi in zip(ca.vertsplit(coeffs), phis):
+        model_approx += coeff*phi
+    models.append(model_approx)
+    fmodel = ca.Function('fmodel', [x, u], [model_approx])    
+    fmodels.append(fmodel)
+
+_u = 0.5
+xs = np.linspace(-1.0, 1.0, 20)
+plt.figure()
+plt.plot(xs, func(xs, _u), color='black', label="Original")
+plt.plot(xs, fmodels[3](xs, _u), 'o-', alpha=0.5, label=f"MB - 2nd order")
+plt.plot(xs, fmodels[4](xs, _u), 'o-', alpha=0.5, label=f"MB - 4th order")
+plt.plot(xs, fmodels[5](xs, _u), 'o-', alpha=0.5, label=f"MB - 6th order")
+plt.legend()
+plt.title(f"$u = {_u}$")
+plt.ylabel("$f, p_n$")
+plt.xlabel("$x$")
+plt.savefig(f"./Examples/comparison_mb.png")
+    
+# asdfasd
 
 #Direct 0th order
 phi_0 = ca.DM(1)
