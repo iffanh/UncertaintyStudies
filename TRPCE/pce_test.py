@@ -7,19 +7,24 @@ import lagrange_polynomial as lp
 # def f(x:np.ndarray, a:float, b:float): # Assume long running process
 #     return np.abs(a*x[0] + b*np.exp(-x[1]))
 
-max_iter = 100
+max_iter = 10
 # def f(x:np.ndarray, a, b) -> np.ndarray:
 #     return a*(x[0]**2)*(1 + 0.75*np.cos(70*x[0])/12) + np.cos(100*x[0])**2/24 + b*(x[1]**2)*(1 + 0.75*np.cos(70*x[1])/12) + np.cos(100*x[1])**2/24 + 4*x[0]*x[1]
 # def f(x:np.ndarray, a) -> np.ndarray:
 #     return (x[0]**2) + (x[1]**2) + a*x[0]*x[1]
 
 def f(x:np.ndarray, a) -> np.ndarray: 
-    return (x[0] - a)**2 + (x[1] - a)**2
-#corresponds to a - Uniform[0,2] E[f(x)] = g(x) = (x[0] - 1)^2 + (x[1] - 1)^2 + 2/3
-
+    return (x[0] - a)**2 + (x[1] - a)**2 #corresponds to a - Uniform[0,2] E[f(x)] = g(x) = (x[0] - 1)^2 + (x[1] - 1)^2 + 2/3
 
 center = np.array([[10., 10.]]).T
 radius = 1.
+
+alpha = chaospy.Uniform(0, 2)
+joint = chaospy.J(alpha)
+gauss_quads = chaospy.generate_quadrature(20, joint, rule="gaussian") #(order of quadrature, joint prob, rule)
+nodes, weights = gauss_quads
+expansion = chaospy.generate_expansion(15, joint)
+    
 for no_iter in range(max_iter):
     
     print(f"============={no_iter}===============")
@@ -39,11 +44,6 @@ for no_iter in range(max_iter):
     ## Specify uncertainty, quadratures, and PC expansion
     # alpha = chaospy.Normal(10, 2.0)
     # beta = chaospy.Uniform(1.5, 2.5)
-    alpha = chaospy.Uniform(0, 2)
-    joint = chaospy.J(alpha)
-    gauss_quads = chaospy.generate_quadrature(15, joint, rule="gaussian") #(order of quadrature, joint prob, rule)
-    nodes, weights = gauss_quads
-    expansion = chaospy.generate_expansion(4, joint)
 
 
     # Build Lagrange polynomials for decision variables
@@ -56,18 +56,17 @@ for no_iter in range(max_iter):
 
     model = ca.SX(0)
     model_db = dict()
-    for i, x in enumerate(samples.T):
+    for i, x in enumerate(samples.T): # for each control variable, make uncertainty surrogate
         gauss_evals = np.array([f(x, node[0]) for node in nodes.T])
         gauss_model_approx = chaospy.fit_quadrature(expansion, nodes, weights, gauss_evals)
         gauss_model_approx_evals = np.array([gauss_model_approx(node[0]) for node in nodes.T])
         expected = chaospy.E(gauss_model_approx, joint)
         std = chaospy.Std(gauss_model_approx, joint)
-        g = 0.0
+        g = 1.0
         robustness = g*expected + (1-g)*std
         model = model + robustness*lpe[i].symbol
 
     model_approx = ca.Function('approx', [input_symbols], [model])
-    # center = samples[:, [min_ind]]
     center = samples[:, [3]]
     
     # construct NLP problem
@@ -79,15 +78,17 @@ for no_iter in range(max_iter):
     
     ubg = [radius]
     lbg = [0]
-    opts = {'ipopt.print_level':2, 'print_time':0}
+    opts = {'ipopt.print_level':2, 'print_time':2}
+    # opts = {}
 
     # solve TRQP problem
     solver = ca.nlpsol('TRQP_composite', 'ipopt', nlp, opts)
-    sol = solver(x0=center+(radius/100), ubg=ubg, lbg=lbg)
+    sol = solver(x0=center+(radius/1E+8), ubg=ubg, lbg=lbg)
+    # sol = solver(x0=center, ubg=ubg, lbg=lbg)
 
     x_new = sol['x'].full()
-    evals_new = np.mean(np.array([f(x_new, node[0]) for node in nodes.T]))
-    evals_old = np.mean(np.array([f(center, node[0]) for node in nodes.T]))
+    evals_new = np.sum(np.array([f(x_new, node[0])*weight for node, weight in zip(nodes.T, weights)]))
+    evals_old = np.sum(np.array([f(center, node[0])*weight for node, weight in zip(nodes.T, weights)]))
     evals_approx_new = model_approx(x_new)
     evals_approx_old = model_approx(center)
     
@@ -101,13 +102,16 @@ for no_iter in range(max_iter):
     print(f"evals_approx_old = {evals_approx_old}")
     print(f"evals_approx_new = {evals_approx_new}")
     
+    if evals_approx_new > evals_approx_old:
+        raise Exception(f"This must not happen. Delta approx = {evals_approx_new - evals_approx_old}. Delta actual = {evals_new - evals_old}")
+    
     if rho > 0.4: # good
         center = x_new*1
         radius = radius*1.2
-    elif rho > 0.01: 
-        center = x_new*1
+    elif rho > 0.1: 
+        center = x_new*0.7
     else:
-        radius = radius*0.7
+        radius = radius*0.5
         
     
     print(f"model eval = {sol['f']}")

@@ -37,7 +37,6 @@ lpe = lag_polys.lagrange_polynomials
 
 
 ## Build PCE for uncertainty
-
 model = ca.SX(0)
 model_db = dict()
 for i, x in enumerate(samples.T):
