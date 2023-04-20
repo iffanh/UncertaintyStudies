@@ -54,18 +54,26 @@ phi_0 = ca.DM(1)
 phi_1 = x 
 phi_2 = x**2 - 1/3
 phis = [phi_0, phi_1, phi_2]
-points1 = [-np.sqrt(3/5), 0.0, np.sqrt(3/5)]
+points = [-np.sqrt(3/5), 0.0, np.sqrt(3/5)]
 
-fmodels = []
-models = []
-for points in [points1]:
-    coeffs = find_coefficients(x, u, phis, points)
-    model_approx = ca.DM(0)
-    for coeff, phi in zip(ca.vertsplit(coeffs), phis):
-        model_approx += coeff*phi
-    models.append(model_approx)
-    fmodel = ca.Function('fmodel', [x, u], [model_approx])    
-    fmodels.append(fmodel)
+# models = []
+# for points in [points1]:
+coeffs = find_coefficients(x, u, phis, points)
+model_approx = ca.DM(0)
+for coeff, phi in zip(ca.vertsplit(coeffs), phis):
+    model_approx += coeff*phi
+# models.append(model_approx)
+fmodel_2gq = ca.Function('fmodel', [x, u], [model_approx])
+
+points = [-0.5, 0.0, 0.5]
+coeffs = find_coefficients(x, u, phis, points)
+model_approx = ca.DM(0)
+for coeff, phi in zip(ca.vertsplit(coeffs), phis):
+    model_approx += coeff*phi
+# models.append(model_approx)
+fmodel_2ud = ca.Function('fmodel', [x, u], [model_approx])
+    
+    # fmodels.append(fmodel)
     
 # Collocation method, 4th order
 phi_0 = ca.DM(1)
@@ -80,17 +88,23 @@ coeff3 = -45*(21*u**2 - 18*u + 5)/315
 coeff4 = ca.SX(0.0)
 coeff5 = 11025*(11*u-5)/40425
 coeffs = [coeff1, coeff2, coeff3, coeff4, coeff5]
-points1 = [-0.90617984593866, -0.538469310105683, 0.000000000000000, 0.538469310105683, 0.90617984593866]
+points = [-0.90617984593866, -0.538469310105683, 0.000000000000000, 0.538469310105683, 0.90617984593866]
 
-models = []
-for points in [points1]:
-    coeffs = find_coefficients(x, u, phis, points)
-    model_approx = ca.DM(0)
-    for coeff, phi in zip(ca.vertsplit(coeffs), phis):
-        model_approx += coeff*phi
-    models.append(model_approx)
-    fmodel = ca.Function('fmodel', [x, u], [model_approx])    
-    fmodels.append(fmodel)
+coeffs = find_coefficients(x, u, phis, points)
+model_approx = ca.DM(0)
+for coeff, phi in zip(ca.vertsplit(coeffs), phis):
+    model_approx += coeff*phi
+# models.append(model_approx)
+fmodel_4gq = ca.Function('fmodel', [x, u], [model_approx])
+
+points = [-0.666666666666, -0.3333333333333, 0.000000000000000, 0.3333333333333, 0.666666666666]
+
+coeffs = find_coefficients(x, u, phis, points)
+model_approx = ca.DM(0)
+for coeff, phi in zip(ca.vertsplit(coeffs), phis):
+    model_approx += coeff*phi
+# models.append(model_approx)
+fmodel_4ud = ca.Function('fmodel', [x, u], [model_approx])  
     
 # Collocation method, 6th order
 phi_0 = ca.DM(1)
@@ -109,31 +123,50 @@ coeff5 = 11025*(11*u-5)/40425
 coeff6 = ca.SX(0.0)
 coeff7 = ca.SX(-1.0)
 coeffs = [coeff1, coeff2, coeff3, coeff4, coeff5, coeff6, coeff7]
-points1 = [-0.949107912342759, -0.741531185599394, -0.405845151377397, 0.000000000000000, 0.405845151377397, 0.741531185599394, 0.949107912342759]
+points = [-0.949107912342759, -0.741531185599394, -0.405845151377397, 0.000000000000000, 0.405845151377397, 0.741531185599394, 0.949107912342759]
 
-models = []
-for points in [points1]:
-    coeffs = find_coefficients(x, u, phis, points)
-    model_approx = ca.DM(0)
-    for coeff, phi in zip(ca.vertsplit(coeffs), phis):
-        model_approx += coeff*phi
-    models.append(model_approx)
-    fmodel = ca.Function('fmodel', [x, u], [model_approx])    
-    fmodels.append(fmodel)
+coeffs = find_coefficients(x, u, phis, points)
+model_approx = ca.DM(0)
+for coeff, phi in zip(ca.vertsplit(coeffs), phis):
+    model_approx += coeff*phi
+# models.append(model_approx)
+fmodel_6gq = ca.Function('fmodel', [x, u], [model_approx]) 
+# fmodels.append(fmodel)
     
-# for i, _u in enumerate(np.linspace(-1, 1, 10)):
+points = [-0.75, -0.5, -0.25, 0.0, 0.25, 0.5, 0.75]
+
+coeffs = find_coefficients(x, u, phis, points)
+model_approx = ca.DM(0)
+for coeff, phi in zip(ca.vertsplit(coeffs), phis):
+    model_approx += coeff*phi
+# models.append(model_approx)
+fmodel_6ud = ca.Function('fmodel', [x, u], [model_approx])   
+    
 _u = 0.5
 xs = np.linspace(-1.0, 1.0, 20)
 plt.figure()
 plt.plot(xs, func(xs, _u), color='black', label="Original")
-plt.plot(xs, fmodels[0](xs, _u), 'o-', alpha=0.5, label=f"CM - 2nd order")
-plt.plot(xs, fmodels[1](xs, _u), 'o-', alpha=0.5, label=f"CM - 4th order")
-plt.plot(xs, fmodels[2](xs, _u), 'o-', alpha=0.5, label=f"CM - 6th order")
+plt.plot(xs, fmodel_2gq(xs, _u), 'o-', alpha=0.5, label=f"CM - 2nd order")
+plt.plot(xs, fmodel_4gq(xs, _u), 'o-', alpha=0.5, label=f"CM - 4th order")
+plt.plot(xs, fmodel_6gq(xs, _u), 'o-', alpha=0.5, label=f"CM - 6th order")
 plt.legend()
 plt.title(f"$u = {_u}$")
 plt.ylabel("$f, p_n$")
 plt.xlabel("$x$")
-plt.savefig(f"./Examples/comparison_col.png")
+plt.savefig(f"./Examples/comparison_col_gq.png")
+
+_u = 0.5
+xs = np.linspace(-1.0, 1.0, 20)
+plt.figure()
+plt.plot(xs, func(xs, _u), color='black', label="Original")
+plt.plot(xs, fmodel_2ud(xs, _u), 'o-', alpha=0.5, label=f"CM - 2nd order")
+plt.plot(xs, fmodel_4ud(xs, _u), 'o-', alpha=0.5, label=f"CM - 4th order")
+plt.plot(xs, fmodel_6ud(xs, _u), 'o-', alpha=0.5, label=f"CM - 6th order")
+plt.legend()
+plt.title(f"$u = {_u}$")
+plt.ylabel("$f, p_n$")
+plt.xlabel("$x$")
+plt.savefig(f"./Examples/comparison_col_ud.png")
 
 # Arbitrary PCE
 np.random.seed(123)
@@ -177,32 +210,89 @@ phi_5 = apce_find_orthogonal_polynomial(6, samples, x)
 phi_6 = apce_find_orthogonal_polynomial(7, samples, x)
 
 # 2nd 4th 6th
+ 
 phis = [phi_0, phi_1, phi_2]
-for (phis, points) in [([phi_0, phi_1, phi_2], [-np.sqrt(3/5), 0.0, np.sqrt(3/5)]),
-                        ([phi_0, phi_1, phi_2, phi_3, phi_4], [-0.90617984593866, -0.538469310105683, 0.000000000000000, 0.538469310105683, 0.90617984593866]),
-                        ([phi_0, phi_1, phi_2, phi_3, phi_4, phi_5, phi_6], [-0.949107912342759, -0.741531185599394, -0.405845151377397, 0.000000000000000, 0.405845151377397, 0.741531185599394, 0.949107912342759])]:
-    # points = [-np.sqrt(3/5), 0.0, np.sqrt(3/5)]
-    coeffs = find_coefficients(x, u, phis, points)
-    model_approx = ca.DM(0)
-    for coeff, phi in zip(ca.vertsplit(coeffs), phis):
-        model_approx += coeff*phi
-    models.append(model_approx)
-    fmodel = ca.Function('fmodel', [x, u], [model_approx])    
-    fmodels.append(fmodel)
+points = [-np.sqrt(3/5), 0.0, np.sqrt(3/5)]
+coeffs = find_coefficients(x, u, phis, points)
+model_approx = ca.DM(0)
+for coeff, phi in zip(ca.vertsplit(coeffs), phis):
+    model_approx += coeff*phi
+fmodel_mb_2gq = ca.Function('fmodel', [x, u], [model_approx])
+
+points = [-0.5, 0.0, 0.5]
+coeffs = find_coefficients(x, u, phis, points)
+model_approx = ca.DM(0)
+for coeff, phi in zip(ca.vertsplit(coeffs), phis):
+    model_approx += coeff*phi
+fmodel_mb_2ud = ca.Function('fmodel', [x, u], [model_approx])
+
+phis = [phi_0, phi_1, phi_2, phi_3, phi_4]
+points = [-0.90617984593866, -0.538469310105683, 0.000000000000000, 0.538469310105683, 0.90617984593866]
+coeffs = find_coefficients(x, u, phis, points)
+model_approx = ca.DM(0)
+for coeff, phi in zip(ca.vertsplit(coeffs), phis):
+    model_approx += coeff*phi
+fmodel_mb_4gq = ca.Function('fmodel', [x, u], [model_approx])   
+
+points = [-0.666666666666, -0.3333333333333, 0.000000000000000, 0.3333333333333, 0.666666666666]
+coeffs = find_coefficients(x, u, phis, points)
+model_approx = ca.DM(0)
+for coeff, phi in zip(ca.vertsplit(coeffs), phis):
+    model_approx += coeff*phi
+fmodel_mb_4ud = ca.Function('fmodel', [x, u], [model_approx])  
+
+phis = [phi_0, phi_1, phi_2, phi_3, phi_4, phi_5, phi_6]
+points = [-0.949107912342759, -0.741531185599394, -0.405845151377397, 0.000000000000000, 0.405845151377397, 0.741531185599394, 0.949107912342759]
+coeffs = find_coefficients(x, u, phis, points)
+model_approx = ca.DM(0)
+for coeff, phi in zip(ca.vertsplit(coeffs), phis):
+    model_approx += coeff*phi
+fmodel_mb_6gq = ca.Function('fmodel', [x, u], [model_approx])
+
+points = [-0.75, -0.5, -0.25, 0.0, 0.25, 0.5, 0.75]
+coeffs = find_coefficients(x, u, phis, points)
+model_approx = ca.DM(0)
+for coeff, phi in zip(ca.vertsplit(coeffs), phis):
+    model_approx += coeff*phi
+fmodel_mb_6gq = ca.Function('fmodel', [x, u], [model_approx])
 
 _u = 0.5
 xs = np.linspace(-1.0, 1.0, 20)
 plt.figure()
 plt.plot(xs, func(xs, _u), color='black', label="Original")
-plt.plot(xs, fmodels[3](xs, _u), 'o-', alpha=0.5, label=f"MB - 2nd order")
-plt.plot(xs, fmodels[4](xs, _u), 'o-', alpha=0.5, label=f"MB - 4th order")
-plt.plot(xs, fmodels[5](xs, _u), 'o-', alpha=0.5, label=f"MB - 6th order")
+plt.plot(xs, fmodel_mb_2gq(xs, _u), 'o-', alpha=0.5, label=f"MB - 2nd order")
+plt.plot(xs, fmodel_mb_4gq(xs, _u), 'o-', alpha=0.5, label=f"MB - 4th order")
+plt.plot(xs, fmodel_mb_6gq(xs, _u), 'o-', alpha=0.5, label=f"MB - 6th order")
 plt.legend()
 plt.title(f"$u = {_u}$")
 plt.ylabel("$f, p_n$")
 plt.xlabel("$x$")
-plt.savefig(f"./Examples/comparison_mb.png")
+plt.savefig(f"./Examples/comparison_mb_gq.png")
+
+_u = 0.5
+xs = np.linspace(-1.0, 1.0, 20)
+plt.figure()
+plt.plot(xs, func(xs, _u), color='black', label="Original")
+plt.plot(xs, fmodel_2gq(xs, _u), '--', alpha=1.0, label=f"Collocation method")
+plt.plot(xs, fmodel_mb_2gq(xs, _u), 'o', alpha=1.0, label=f"Moment based ")
+plt.legend()
+plt.title(f"$u = {_u}$")
+plt.ylabel("$f, p_n$")
+plt.xlabel("$x$")
+plt.savefig(f"./Examples/comparison_col_mb.png")
     
+_u = 0.5
+xs = np.linspace(-2.0, 2.0, 20)
+plt.figure()
+plt.plot(xs, func(xs, _u), color='black', label="Original")
+plt.plot(xs, fmodel_2gq(xs, _u), '--', alpha=1.0, label=f"Collocation method")
+plt.plot(xs, fmodel_mb_2gq(xs, _u), 'o', alpha=1.0, label=f"Moment based ")
+plt.legend()
+plt.title(f"$u = {_u}$")
+plt.ylabel("$f, p_n$")
+plt.xlabel("$x$")
+plt.savefig(f"./Examples/comparison_col_mb_2.png")    
+
 # asdfasd
 
 #Direct 0th order
@@ -212,9 +302,9 @@ coeff1 = u**3 - u**2 + 3*u/5 - 1/7
 coeffs = [coeff1]
 for coeff, phi in zip(coeffs, phis):
     model_approx += coeff*phi
-models.append(model_approx)
+# models.append(model_approx)
 fmodel = ca.Function('fmodel', [x, u], [model_approx])    
-fmodels.append(fmodel)
+# fmodels.append(fmodel)
 
 #Direct 2nd order
 phi_0 = ca.DM(1)
@@ -227,9 +317,9 @@ coeff3 = -45*(21*u**2 - 18*u + 5)/315
 coeffs = [coeff1, coeff2, coeff3]
 for coeff, phi in zip(coeffs, phis):
     model_approx += coeff*phi
-models.append(model_approx)
+# models.append(model_approx)
 fmodel = ca.Function('fmodel', [x, u], [model_approx])    
-fmodels.append(fmodel)
+# fmodels.append(fmodel)
 
 #Direct 4th order
 phi_0 = ca.DM(1)
@@ -242,9 +332,9 @@ coeff5 = 11025*(11*u-5)/40425
 coeffs = [coeff1, coeff3, coeff5]
 for coeff, phi in zip(coeffs, phis):
     model_approx += coeff*phi
-models.append(model_approx)
+# models.append(model_approx)
 fmodel = ca.Function('fmodel', [x, u], [model_approx])    
-fmodels.append(fmodel)
+# fmodels.append(fmodel)
 
 #Direct 6th order
 phi_0 = ca.DM(1)
@@ -259,9 +349,9 @@ coeff7 = ca.SX(-1.0)
 coeffs = [coeff1, coeff3, coeff5, coeff7]
 for coeff, phi in zip(coeffs, phis):
     model_approx += coeff*phi
-models.append(model_approx)
+# models.append(model_approx)
 fmodel = ca.Function('fmodel', [x, u], [model_approx])    
-fmodels.append(fmodel)
+# fmodels.append(fmodel)
 
 # # for i, _u in enumerate(np.linspace(-1, 1, 10)):
 # _u = 0.5
